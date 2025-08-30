@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>SusanBot Dashboard</title>
+<meta http-equiv="refresh" content="15">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; margin:0; background:#f3f6ff; color:#0d1b2a; }
+header { background:#112; color:#fff; padding:16px 20px; }
+.container { max-width:1200px; margin:20px auto; padding:0 16px; }
+h1 { margin:0; font-size:20px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.card { background:#fff; border-radius:8px; padding:12px; box-shadow:0 6px 18px rgba(18,24,40,0.06); }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th, td { padding:8px 10px; border-bottom:1px solid #eef2ff; vertical-align:top; text-align:left; }
+th { font-size:12px; color:#6b7280; }
+.mono { font-family:ui-monospace, monospace; font-size:12px; color:#0b1220; }
+.muted { color:#6b7280; font-size:13px; }
+textarea,input { width:100%; padding:8px; margin:6px 0; border-radius:6px; border:1px solid #e6eefc; }
+button { padding:8px 12px; border-radius:6px; border:none; background:#2563eb; color:#fff; cursor:pointer; }
+.logs { height:220px; overflow:auto; background:#0b1220; color:#d1e7ff; font-family: ui-monospace, monospace; padding:10px; border-radius:6px; white-space:pre-wrap; }
+.toggle-switch { position:relative; display:inline-block; width:60px; height:28px; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#ccc; transition:.4s; border-radius:28px; }
+.slider:before { position:absolute; content:""; height:22px; width:22px; left:3px; bottom:3px; background:white; transition:.4s; border-radius:50%; }
+input:checked + .slider { background:#4ade80; }
+input:checked + .slider:before { transform:translateX(32px); }
+@media (max-width:980px){ .grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header>
+<div class="container">
+<h1>SusanBot Dashboard</h1>
+<div class="muted">Auto-replies drafted and scheduled. Refresh every 15s.</div>
+<label class="toggle-switch">
+<input type="checkbox" id="auto_toggle" checked>
+<span class="slider"></span> Auto Sending
+</label>
+</div>
+</header>
+<div class="container">
+<div class="grid">
+<div class="card">
+<h3>Inbound Emails</h3>
+<table>
+<thead><tr><th>From</th><th>Subject</th><th>Body</th><th>Time</th></tr></thead>
+<tbody>
+{% if inbound %}
+{% for m in inbound %}
+<tr>
+<td class="mono">{{ m.from }}</td>
+<td>{{ m.subject }}</td>
+<td style="max-width:360px; word-wrap:break-word;">{{ m.body }}</td>
+<td class="mono">{{ m.time }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="4" class="muted">No inbound emails</td></tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="card">
+<h3>Outbound (scheduled & sent)</h3>
+<table>
+<thead><tr><th>To</th><th>Subject</th><th>Body</th><th>Scheduled</th><th>Status</th></tr></thead>
+<tbody>
+{% if outbound %}
+{% for m in outbound %}
+<tr>
+<td class="mono">{{ m.to }}</td>
+<td>{{ m.subject }}</td>
+<td style="max-width:360px; word-wrap:break-word;">{{ m.body }}</td>
+<td class="mono">{{ m.scheduled_for or '—' }}</td>
+<td>{{ m.status }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="5" class="muted">No outbound emails</td></tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+<div style="margin-top:14px;" class="card">
+<h3>Service Log</h3>
+<div class="logs" id="logsarea">{{ logs }}</div>
+</div>
+<script>
+const autoToggle = document.getElementById("auto_toggle");
+autoToggle.checked = localStorage.getItem("auto_toggle") !== "false";
+autoToggle.addEventListener("change",()=>{
+localStorage.setItem("auto_toggle", autoToggle.checked);
+fetch("/set_auto",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({enabled:autoToggle.checked})});
+});
+const logsarea = document.getElementById("logsarea");
+if(logsarea) logsarea.scrollTop = logsarea.scrollHeight;
+</script>
+</body>
+</html>
